@@ -5,12 +5,14 @@ import { NavTab } from "../types";
 interface SidebarProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
+  onHideToTray: () => void;
   reposCount: number;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
+  onHideToTray,
   reposCount,
 }) => {
   return (
@@ -64,17 +66,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </nav>
 
-      {/* 底部运行环境模式提示 */}
+      {/* 底部缩小到托盘与运行模式提示 */}
       <div
         style={{
           padding: "12px 10px",
           fontSize: "11px",
           color: "var(--text-muted)",
           borderTop: "1px solid var(--border-subtle)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "8px",
         }}
       >
+        <button
+          className="btn btn-secondary"
+          style={{ width: "100%", fontSize: "11px", padding: "6px", justifyContent: "center" }}
+          onClick={onHideToTray}
+          title="缩小至系统托盘常驻（不在任务栏占位）"
+        >
+          📥 缩小至系统托盘
+        </button>
         <div>已就绪资产：{reposCount} 个项目</div>
-        <div style={{ marginTop: "4px" }}>持久化：本地安全缓存</div>
       </div>
     </aside>
   );

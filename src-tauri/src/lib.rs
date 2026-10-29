@@ -110,10 +110,43 @@ fn batch_load_local_repos_cmd(target_path: String) -> Result<Vec<RepoHealth>, St
     batch_load_local_repos(&target_path)
 }
 
+pub mod tray;
+
+#[tauri::command]
+fn hide_to_tray_cmd(window: tauri::WebviewWindow) {
+    let _ = window.hide();
+}
+
+#[tauri::command]
+fn exit_app_cmd(app: tauri::AppHandle) {
+    app.exit(0);
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
+        .setup(|app| {
+            if let Err(e) = tray::setup_tray(app.handle()) {
+                eprintln!("初始化托盘失败: {}", e);
+            }
+            Ok(())
+        })
+        .on_window_event(|window, event| {
+            use tauri::Emitter;
+            match event {
+                tauri::WindowEvent::CloseRequested { api, .. } => {
+                    api.prevent_close();
+                    let _ = window.emit("window-close-requested", ());
+                }
+                tauri::WindowEvent::Resized(_) => {
+                    if window.is_minimized().unwrap_or(false) {
+                        let _ = window.hide();
+                    }
+                }
+                _ => {}
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             get_git_environment_cmd,
             set_git_config_cmd,
@@ -133,7 +166,9 @@ pub fn run() {
             pick_folder_cmd,
             clone_remote_repo_cmd,
             configure_remote_url_cmd,
-            batch_load_local_repos_cmd
+            batch_load_local_repos_cmd,
+            hide_to_tray_cmd,
+            exit_app_cmd
         ])
         .run(tauri::generate_context!())
         .expect("运行 Repo Rover 时发生致命错误");

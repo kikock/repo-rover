@@ -22,6 +22,11 @@ import {
   cloneRemoteRepo,
   configureRemoteUrl,
   batchLoadLocalRepos,
+  hideToTray,
+  exitApp,
+  onCloseRequested,
+  getCloseAction,
+  setCloseAction,
 } from "./services/api";
 import {
   applyThemeConfig,
@@ -40,6 +45,7 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { AddRepoModal } from "./components/AddRepoModal";
 import { GitInspectorModal } from "./components/GitInspectorModal";
 import { ConfirmModal } from "./components/ConfirmModal";
+import { CloseActionModal } from "./components/CloseActionModal";
 import { ActionToast } from "./components/ActionToast";
 
 const CLONE_BASE_STORAGE_KEY = "reporover_default_clone_base_dir";
@@ -120,6 +126,7 @@ export default function App() {
     description: "",
     onConfirm: () => {},
   });
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   // 初始化环境与主题
   useEffect(() => {
@@ -132,7 +139,25 @@ export default function App() {
       if (e.detail) showNotice(e.detail);
     };
     window.addEventListener("repo-rover-notice", handleNoticeEvent);
-    return () => window.removeEventListener("repo-rover-notice", handleNoticeEvent);
+
+    let unlistenClose: (() => void) | null = null;
+    onCloseRequested(() => {
+      const action = getCloseAction();
+      if (action === "tray") {
+        hideToTray();
+      } else if (action === "quit") {
+        exitApp();
+      } else {
+        setIsCloseModalOpen(true);
+      }
+    }).then((fn) => {
+      unlistenClose = fn;
+    });
+
+    return () => {
+      window.removeEventListener("repo-rover-notice", handleNoticeEvent);
+      if (unlistenClose) unlistenClose();
+    };
   }, [showNotice]);
 
   const loadEnv = async () => {
@@ -412,6 +437,7 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        onHideToTray={() => hideToTray()}
         reposCount={repos.length}
       />
 
@@ -676,6 +702,21 @@ export default function App() {
       <ConfirmModal
         config={confirmModal}
         onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      <CloseActionModal
+        isOpen={isCloseModalOpen}
+        onCancel={() => setIsCloseModalOpen(false)}
+        onHideToTray={(remember) => {
+          setIsCloseModalOpen(false);
+          if (remember) setCloseAction("tray");
+          hideToTray();
+        }}
+        onExitApp={(remember) => {
+          setIsCloseModalOpen(false);
+          if (remember) setCloseAction("quit");
+          exitApp();
+        }}
       />
 
       <ActionToast message={actionNotice} />

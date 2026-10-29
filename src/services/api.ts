@@ -365,3 +365,41 @@ export async function batchLoadLocalRepos(targetPath: string): Promise<RepoHealt
   return [];
 }
 
+// 隐藏窗口到托盘
+export async function hideToTray(): Promise<void> {
+  if (isTauriEnv()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("hide_to_tray_cmd");
+  }
+}
+
+// 彻底退出应用
+export async function exitApp(): Promise<void> {
+  if (isTauriEnv()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("exit_app_cmd");
+  }
+}
+
+// 监听窗口关闭按钮请求
+export async function onCloseRequested(callback: () => void): Promise<() => void> {
+  if (!isTauriEnv()) return () => {};
+  const { listen } = await import("@tauri-apps/api/event");
+  const unlisten = await listen("window-close-requested", () => {
+    callback();
+  });
+  return unlisten;
+}
+
+// 获取关闭窗口行为配置
+export function getCloseAction(): "ask" | "tray" | "quit" {
+  const val = localStorage.getItem("reporover_close_action");
+  if (val === "tray" || val === "quit") return val;
+  return "ask";
+}
+
+// 保存关闭窗口行为配置
+export function setCloseAction(action: "ask" | "tray" | "quit"): void {
+  localStorage.setItem("reporover_close_action", action);
+}
+

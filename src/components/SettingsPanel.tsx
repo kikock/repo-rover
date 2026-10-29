@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState } from "react";
+import { getCloseAction, setCloseAction } from "../services/api";
 import {
   ThemeConfig,
   ThemeMode,
@@ -230,6 +231,77 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             保存剪枝规则
           </button>
         </div>
+      </div>
+
+      {/* 窗口与系统托盘行为配置卡片 */}
+      <div
+        style={{
+          background: "var(--bg-card)",
+          borderRadius: "var(--radius-md)",
+          padding: "24px",
+          border: "1px solid var(--border-subtle)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+        }}
+      >
+        <h3 style={{ fontSize: "16px" }}>🗔 窗口控制与系统托盘行为</h3>
+        <p style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+          点击主窗口右上角关闭按钮（X）时的默认响应动作：
+        </p>
+
+        {(() => {
+          const [action, setAction] = useState<"ask" | "tray" | "quit">(() => getCloseAction());
+
+          return (
+            <>
+              <div style={{ display: "flex", gap: "16px", flexWrap: "wrap", fontSize: "13px" }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="roverCloseAction"
+                    value="ask"
+                    checked={action === "ask"}
+                    onChange={() => {
+                      setAction("ask");
+                      setCloseAction("ask");
+                    }}
+                  />
+                  <span>每次询问（弹窗提示）</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="roverCloseAction"
+                    value="tray"
+                    checked={action === "tray"}
+                    onChange={() => {
+                      setAction("tray");
+                      setCloseAction("tray");
+                    }}
+                  />
+                  <span>最小化到托盘（不在任务栏显示）</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
+                  <input
+                    type="radio"
+                    name="roverCloseAction"
+                    value="quit"
+                    checked={action === "quit"}
+                    onChange={() => {
+                      setAction("quit");
+                      setCloseAction("quit");
+                    }}
+                  />
+                  <span>直接退出程序</span>
+                </label>
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--text-muted)" }}>
+                * 点击窗口最小化按钮（_）时，窗口将直接缩小至系统托盘，不再占用任务栏空间。
+              </div>
+            </>
+          );
+        })()}
       </div>
     </div>
   );

@@ -1,0 +1,193 @@
+name: Build And Release Desktop
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_tag:
+        description: '发布或更新的 Release Tag (默认 main)'
+        required: false
+        default: 'main'
+  push:
+    tags:
+      - 'v*.*.*'
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag_name: ${{ steps.version.outputs.tag_name }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Read version from package.json
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          
+          # 处理带 v 前缀的 tag 或 workflow_dispatch 自定义 target_tag
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.target_tag }}" ]; then
+            tag="${{ github.event.inputs.target_tag }}"
+          else
+            tag="${GITHUB_REF_NAME:-v$version}"
+          fi
+          echo "tag_name=${tag}" >> "$GITHUB_OUTPUT"
+          echo "检测到版本号: $version (Tag: $tag)"
+
+      - name: Validate tag matches package version
+        if: github.event_name == 'push' && github.ref_type == 'tag'
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_version="${{ steps.version.outputs.version }}"
+          pushed_tag="${{ github.ref_name }}"
+          # 允许 v1.0.0 或 1.0.0
+          clean_tag="${pushed_tag#v}"
+
+          if [[ "$clean_tag" != "$expected_version" ]]; then
+            echo "❌ 推送的 tag ($pushed_tag) 与 package.json 版本 ($expected_version) 不一致"
+            exit 1
+          fi
+          echo "✅ Tag 与 package.json 版本匹配一致: $pushed_tag"
+
+  create-release:
+    needs: prepare-version
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create or Update GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare-version.outputs.tag_name }}
+          APP_VERSION: ${{ needs.prepare-version.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          title="repo-rover v${APP_VERSION}"
+
+          # 读取标准模版并替换版本号，彻底避免 YAML 缩进解析问题
+          sed "s/__VERSION__/${APP_VERSION}/g" .github/release-template.md > release_notes.md
+
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG 已存在，执行更新说明文档..."
+            gh release edit "$RELEASE_TAG" \
+              --title "$title" \
+              --notes-file release_notes.md \
+              --draft=false \
+              --prerelease=false
+          else
+            echo "创建新的 Release $RELEASE_TAG ..."
+            gh release create "$RELEASE_TAG" \
+              --title "$title" \
+              --notes-file release_notes.md \
+              --target "$GITHUB_SHA"
+          fi
+
+          # 若当前发布的不是 main，但存在 tag 叫 main 的 Release，同步更新其说明页面
+          if [ "$RELEASE_TAG" != "main" ] && gh release view "main" >/dev/null 2>&1; then
+            echo "同步美化更新 main Release 页面说明..."
+            gh release edit "main" --title "$title" --notes-file release_notes.md || true
+          fi
+
+  release-windows:
+    needs:
+      - prepare-version
+      - create-release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+
+      - name: Install Frontend Dependencies
+        run: npm install
+
+      - name: Build Tauri Application (Windows NSIS & Portable)
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+        run: npm run tauri build
+
+      - name: Standardize and Validate Windows Artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = "${{ needs.prepare-version.outputs.version }}"
+          $distDir = "dist-artifacts"
+          New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+
+          # 1. 查找并标准化 NSIS 安装包
+          $nsisFound = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis/*setup*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($nsisFound) {
+            $setupTarget = "$distDir/repo-rover-setup-$version-x64.exe"
+            Copy-Item -Path $nsisFound.FullName -Destination $setupTarget -Force
+            Write-Host "✅ 成功收录安装包: $setupTarget"
+          } else {
+            throw "❌ 未能检测到 NSIS 安装程序产物！"
+          }
+
+          # 2. 查找并标准化单文件便携版 exe
+          $exeFound = Get-ChildItem -Path "src-tauri/target/release" -Filter "*.exe" | Where-Object { 
+            $_.Name -notmatch "build|setup|deps|incremental" -and ($_.Name -match "repo" -or $_.Name -match "Rover")
+          } | Select-Object -First 1
+
+          if ($exeFound) {
+            $portableTarget = "$distDir/repo-rover-portable-$version-x64.exe"
+            Copy-Item -Path $exeFound.FullName -Destination $portableTarget -Force
+            Write-Host "✅ 成功收录单文件便携版: $portableTarget"
+
+            # 3. 压缩生成绿色免安装 zip
+            $zipTarget = "$distDir/repo-rover-$version-win-x64.zip"
+            Compress-Archive -Path $portableTarget -DestinationPath $zipTarget -Force
+            Write-Host "✅ 成功打包绿色解压包: $zipTarget"
+          } else {
+            throw "❌ 未能检测到 Release 可执行程序！"
+          }
+
+          # 4. 最终清单验证
+          Write-Host "--- 最终产物清单 ---"
+          Get-ChildItem -Path $distDir | ForEach-Object {
+            Write-Host "$($_.Name) - $([math]::Round($_.Length / 1MB, 2)) MB"
+          }
+
+      - name: Upload Windows Assets to Release
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ needs.prepare-version.outputs.tag_name }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = Get-ChildItem 'dist-artifacts/*' | Select-Object -ExpandProperty FullName
+
+          Write-Host "正在上传 Windows 产物 (安装包 + 便携版 + 绿色解压包) 到 Release: $env:RELEASE_TAG"
+          gh release upload $env:RELEASE_TAG @files --clobber
+          Write-Host "🎉 全部产物上传成功！"

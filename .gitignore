@@ -5,6 +5,8 @@ dist/
 node_modules/
 /src-tauri/target/
 src-tauri/target/
+dist-artifacts/
+/dist-artifacts/
 
 # 文档与设计规范（不纳入 Git 仓库提交）
 /doc/

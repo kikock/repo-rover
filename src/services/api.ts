@@ -248,7 +248,7 @@ export async function openInExplorer(repoPath: string): Promise<void> {
     const { invoke } = await import("@tauri-apps/api/core");
     await invoke("open_explorer_cmd", { repoPath });
   } else {
-    alert(`[Web模式] 模拟在资源管理器中定位: ${repoPath}`);
+    window.dispatchEvent(new CustomEvent("repo-rover-notice", { detail: `[Web预览模式] 模拟在资源管理器中定位: ${repoPath}` }));
   }
 }
 
@@ -257,7 +257,7 @@ export async function openInTerminal(repoPath: string): Promise<void> {
     const { invoke } = await import("@tauri-apps/api/core");
     await invoke("open_terminal_cmd", { repoPath });
   } else {
-    alert(`[Web模式] 模拟在终端中打开目录: ${repoPath}`);
+    window.dispatchEvent(new CustomEvent("repo-rover-notice", { detail: `[Web预览模式] 模拟在终端中打开目录: ${repoPath}` }));
   }
 }
 
@@ -283,7 +283,7 @@ export async function deletePhysicalRepo(repoPath: string): Promise<void> {
     const { invoke } = await import("@tauri-apps/api/core");
     await invoke("delete_physical_repo_cmd", { repoPath });
   } else {
-    alert(`[Web模式] 模拟删除本地物理文件夹: ${repoPath}`);
+    window.dispatchEvent(new CustomEvent("repo-rover-notice", { detail: `[Web预览模式] 模拟物理删除本地文件夹: ${repoPath}` }));
   }
 }
 

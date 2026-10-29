@@ -134,6 +134,10 @@ pub fn run() {
         }))
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
+            if let Some(win) = app.get_webview_window("main") {
+                let win_icon = tauri::include_image!("icons/128x128.png");
+                let _ = win.set_icon(win_icon);
+            }
             if let Err(e) = tray::setup_tray(app.handle()) {
                 eprintln!("初始化托盘失败: {}", e);
             }

@@ -8,11 +8,11 @@ src-tauri/target/
 dist-artifacts/
 /dist-artifacts/
 
-# 文档与设计规范（不纳入 Git 仓库提交）
+# 文档与设计规范（不纳入 Git 仓库提交，保留 images 截图资源）
 /doc/
 doc/
-/docs/
-docs/
+/docs/*.md
+docs/*.md
 /方案设计与架构规范.md
 方案设计与架构规范.md
 

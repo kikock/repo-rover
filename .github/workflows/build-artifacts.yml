@@ -132,10 +132,60 @@ jobs:
       - name: Install Frontend Dependencies
         run: npm install
 
-      - name: Build Tauri Application (Windows NSIS & Portable)
+      - name: Build Standard Tauri Application (Standard NSIS & Portable)
         env:
           GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
         run: npm run tauri build
+
+      - name: Build Offline Full Installer with Microsoft WebView2 (linkid=2124701)
+        env:
+          GH_TOKEN: ${{ secrets.TOKEN || secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $nsisDir = "src-tauri/target/release/bundle/nsis"
+          
+          # 1. 暂存已生成的官方标准安装包
+          $stdSetup = Get-ChildItem -Path "$nsisDir/*setup*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($stdSetup) {
+            Copy-Item -Path $stdSetup.FullName -Destination "$nsisDir/standard-setup.exe" -Force
+            Write-Host "✅ 已暂存标准版安装包: $($stdSetup.Name)"
+          }
+
+          # 2. 预先通过微软官方永久保留链接验证/下载 (linkid=2124701，彻底杜绝 CDN 哈希轮换 404)
+          $offlineInstallerUrl = "https://go.microsoft.com/fwlink/?linkid=2124701"
+          Write-Host "🌐 正在通过微软官方永久保留链接拉取 WebView2 离线安装器: $offlineInstallerUrl"
+          $tempDir = Join-Path $env:TEMP "webview2_offline"
+          New-Item -ItemType Directory -Force -Path $tempDir | Out-Null
+          $installerPath = Join-Path $tempDir "MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
+          curl.exe -fSLo $installerPath $offlineInstallerUrl
+          Write-Host "✅ 微软官方离线包就绪: $installerPath ($([math]::Round((Get-Item $installerPath).Length / 1MB, 2)) MB)"
+
+          # 3. 动态配置 offlineInstaller 模式并编译离线完整版 NSIS
+          $tauriConfPath = "src-tauri/tauri.conf.json"
+          $conf = Get-Content $tauriConfPath -Raw | ConvertFrom-Json
+          if (-not $conf.bundle.windows) {
+            $conf.bundle | Add-Member -MemberType NoteProperty -Name "windows" -Value (@{})
+          }
+          $conf.bundle.windows = @{
+            webviewInstallMode = @{
+              type = "offlineInstaller"
+            }
+          }
+          $conf | ConvertTo-Json -Depth 10 | Set-Content $tauriConfPath -Encoding utf8
+
+          Write-Host "🚀 开始编译含 WebView2 的全离线完整版安装程序..."
+          npm run tauri build -- --bundles nsis
+
+          # 恢复原始配置文件
+          git checkout -- $tauriConfPath
+
+          # 识别并标记离线完整版产物
+          $offlineSetup = Get-ChildItem -Path "$nsisDir/*setup*.exe" | Where-Object { $_.Name -ne "standard-setup.exe" } | Select-Object -First 1
+          if ($offlineSetup) {
+            Move-Item -Path $offlineSetup.FullName -Destination "$nsisDir/full-offline-setup.exe" -Force
+            Write-Host "✅ 离线完整版构建成功: full-offline-setup.exe"
+          }
 
       - name: Standardize and Validate Windows Artifacts
         shell: pwsh
@@ -144,15 +194,28 @@ jobs:
           $version = "${{ needs.prepare-version.outputs.version }}"
           $distDir = "dist-artifacts"
           New-Item -ItemType Directory -Force -Path $distDir | Out-Null
+          $nsisDir = "src-tauri/target/release/bundle/nsis"
 
-          # 1. 查找并标准化 NSIS 安装包
-          $nsisFound = Get-ChildItem -Path "src-tauri/target/release/bundle/nsis/*setup*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if ($nsisFound) {
-            $setupTarget = "$distDir/repo-rover-setup-$version-x64.exe"
-            Copy-Item -Path $nsisFound.FullName -Destination $setupTarget -Force
-            Write-Host "✅ 成功收录安装包: $setupTarget"
+          # 1. 查找并标准化 NSIS 安装包 (离线完整版 + 官方标准版)
+          $offlineFound = Get-ChildItem -Path "$nsisDir/*offline*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if ($offlineFound) {
+            $offlineTarget = "$distDir/repo-rover-setup-$version-full-offline-x64.exe"
+            Copy-Item -Path $offlineFound.FullName -Destination $offlineTarget -Force
+            Write-Host "✅ 成功收录含 WebView2 离线完整安装包: $offlineTarget"
           } else {
-            throw "❌ 未能检测到 NSIS 安装程序产物！"
+            Write-Host "⚠️ 未检测到离线安装包产物，跳过该项"
+          }
+
+          $stdFound = Get-ChildItem -Path "$nsisDir/*standard*.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $stdFound) {
+            $stdFound = Get-ChildItem -Path "$nsisDir/*setup*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notmatch "offline" } | Select-Object -First 1
+          }
+          if ($stdFound) {
+            $setupTarget = "$distDir/repo-rover-setup-$version-x64.exe"
+            Copy-Item -Path $stdFound.FullName -Destination $setupTarget -Force
+            Write-Host "✅ 成功收录官方标准安装包: $setupTarget"
+          } else {
+            throw "❌ 未能检测到标准 NSIS 安装程序产物！"
           }
 
           # 2. 查找并标准化单文件便携版 exe

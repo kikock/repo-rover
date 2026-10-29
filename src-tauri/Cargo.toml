@@ -1,6 +1,6 @@
 [package]
 name = "repo-rover"
-version = "1.0.1"
+version = "1.0.3"
 description = "Git 仓库全盘探针与资产管理中心"
 authors = ["kikock"]
 edition = "2021"

@@ -437,8 +437,17 @@ export default function App() {
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        onHideToTray={() => hideToTray()}
         reposCount={repos.length}
+        themeMode={themeCfg.mode}
+        onToggleTheme={() => {
+          const nextMode: ThemeMode = themeCfg.mode === "light" ? "dark" : "light";
+          const nextCfg: ThemeConfig = { ...themeCfg, mode: nextMode };
+          saveThemeConfig(nextCfg);
+          setThemeCfg(nextCfg);
+        }}
+        onOpenRepoUrl={() => {
+          openInBrowser("https://github.com/kikock/repo-rover");
+        }}
       />
 
       {/* 主视窗 */}
@@ -466,20 +475,6 @@ export default function App() {
               style={{ opacity: isScanning ? 0.7 : 1 }}
             >
               {isScanning ? "⏳ 正在并发剪枝扫描..." : "⚡ 启动全盘探针扫描"}
-            </button>
-            <button
-              className="btn-secondary"
-              onClick={() => {
-                const nextMode: ThemeMode = themeCfg.mode === "light" ? "dark" : "light";
-                const nextCfg: ThemeConfig = { ...themeCfg, mode: nextMode };
-                saveThemeConfig(nextCfg);
-                setThemeCfg(nextCfg);
-              }}
-            >
-              {themeCfg.mode === "light" ? "☀️ 浅色" : "🌙 深色"}
-            </button>
-            <button className="btn-secondary" onClick={() => setActiveTab("settings")}>
-              🎨 主题色盘
             </button>
           </div>
         </header>

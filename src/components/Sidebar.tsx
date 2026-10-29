@@ -1,19 +1,24 @@
 import React from "react";
 import logoImg from "../assets/logo.png";
 import { NavTab } from "../types";
+import { ThemeMode } from "../services/theme";
 
 interface SidebarProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
-  onHideToTray: () => void;
   reposCount: number;
+  themeMode: ThemeMode;
+  onToggleTheme: () => void;
+  onOpenRepoUrl: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
   activeTab,
   onTabChange,
-  onHideToTray,
   reposCount,
+  themeMode,
+  onToggleTheme,
+  onOpenRepoUrl,
 }) => {
   return (
     <aside className="sidebar">
@@ -66,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </nav>
 
-      {/* 底部缩小到托盘与运行模式提示 */}
+      {/* 底部运行资产、深浅主题切换与开源信息 */}
       <div
         style={{
           padding: "12px 10px",
@@ -75,19 +80,64 @@ export const Sidebar: React.FC<SidebarProps> = ({
           borderTop: "1px solid var(--border-subtle)",
           display: "flex",
           flexDirection: "column",
-          gap: "8px",
+          gap: "10px",
         }}
       >
-        <button
-          className="btn btn-secondary"
-          style={{ width: "100%", fontSize: "11px", padding: "6px", justifyContent: "center" }}
-          onClick={onHideToTray}
-          title="缩小至系统托盘常驻（不在任务栏占位）"
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span>
+            已就绪资产：<strong style={{ color: "var(--text-main)" }}>{reposCount}</strong>
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={onToggleTheme}
+            title={themeMode === "dark" ? "切换为浅色主题" : "切换为深色主题"}
+            style={{
+              padding: "3px 8px",
+              fontSize: "11px",
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+            }}
+          >
+            {themeMode === "light" ? "🌙 深色" : "☀️ 浅色"}
+          </button>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingTop: "6px",
+            borderTop: "1px dashed var(--border-subtle)",
+            fontSize: "10px",
+            color: "var(--text-muted)",
+          }}
         >
-          📥 缩小至系统托盘
-        </button>
-        <div>已就绪资产：{reposCount} 个项目</div>
+          <span>v1.0.2</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
+            <span>by</span>
+            <span style={{ color: "var(--text-secondary)", fontWeight: 600 }}>kikock</span>
+          </div>
+          <button
+            onClick={onOpenRepoUrl}
+            title="在浏览器中访问 GitHub 仓库 (https://github.com/kikock/repo-rover)"
+            style={{
+              background: "none",
+              border: "none",
+              padding: 0,
+              cursor: "pointer",
+              color: "var(--accent-primary)",
+              fontSize: "10px",
+              textDecoration: "underline",
+            }}
+          >
+            Git 仓库 ↗
+          </button>
+        </div>
       </div>
     </aside>
   );
 };
+

@@ -1,0 +1,21 @@
+# 项目排除路径与构建产物
+/dist/
+dist/
+/node_modules/
+node_modules/
+/src-tauri/target/
+src-tauri/target/
+
+# 文档与设计规范（不纳入 Git 仓库提交）
+/doc/
+doc/
+/docs/
+docs/
+/方案设计与架构规范.md
+方案设计与架构规范.md
+
+# 本地临时二进制与 IDE 配置
+RepoRover.exe
+.idea/
+.vscode/
+*.log

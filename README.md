@@ -20,6 +20,20 @@
 
 ---
 
+
+
+---
+
+## 📸 界面预览 (Screenshots)
+
+<div align="center">
+  <img src="docs/images/01-dashboard.png" alt="Repo Rover Dashboard" width="95%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);" />
+  <p><em>▲ 图 1：主控台全景资产看板与四态健康状态矩阵</em></p>
+  <br/>
+  <img src="docs/images/02-ssh-env.png" alt="Repo Rover SSH & Git Environment" width="95%" style="border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);" />
+  <p><em>▲ 图 2：Git 全局配置与 SSH 密钥多身份治理中心</em></p>
+</div>
+
 ## 📖 项目简介
 
 在长期的全栈与多项目开发过程中，开发者的本地硬盘中往往散落着数十甚至数百个 Git 仓库。

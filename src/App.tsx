@@ -43,9 +43,15 @@ import { ConfirmModal } from "./components/ConfirmModal";
 import { ActionToast } from "./components/ActionToast";
 
 const CLONE_BASE_STORAGE_KEY = "reporover_default_clone_base_dir";
-
 export default function App() {
-  const [activeTab, setActiveTab] = useState<NavTab>("dashboard");
+  const [activeTab, setActiveTab] = useState<NavTab>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab === "repos" || tab === "git-env" || tab === "settings" || tab === "dashboard") {
+      return tab as NavTab;
+    }
+    return "dashboard";
+  });
   const [themeCfg, setThemeCfg] = useState<ThemeConfig>(getThemeConfig());
   const [actionNotice, setActionNotice] = useState<string | null>(null);
 

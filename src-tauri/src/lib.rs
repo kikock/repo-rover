@@ -8,7 +8,7 @@ use actions::*;
 use git_env::*;
 use inspector::*;
 use scanner::*;
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 
 #[tauri::command]
 fn get_git_environment_cmd() -> GitEnvironmentInfo {
@@ -125,6 +125,13 @@ fn exit_app_cmd(app: tauri::AppHandle) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.show();
+                let _ = win.unminimize();
+                let _ = win.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             if let Err(e) = tray::setup_tray(app.handle()) {

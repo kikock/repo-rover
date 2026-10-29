@@ -11,7 +11,7 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), Box<dyn std::error::Error>> {
     let quit_i = MenuItem::with_id(app, "quit", "退出程序", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show_i, &hide_i, &sep, &quit_i])?;
 
-    let icon = app.default_window_icon().cloned().ok_or("找不到默认图标")?;
+    let icon = tauri::include_image!("icons/32x32.png");
 
     TrayIconBuilder::new()
         .icon(icon)

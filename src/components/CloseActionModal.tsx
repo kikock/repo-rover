@@ -130,29 +130,64 @@ export const CloseActionModal: React.FC<CloseActionModalProps> = ({
           <span>记住我的选择，下次不再提示（可在「扫描与剪枝规则」中修改）</span>
         </label>
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
           <button
-            className="btn btn-secondary"
             onClick={onCancel}
-            style={{ padding: "7px 14px", fontSize: 12.5, borderRadius: 6 }}
+            style={{
+              padding: "8px 16px",
+              fontSize: 13,
+              borderRadius: 8,
+              border: "1px solid var(--border-subtle)",
+              background: "var(--bg-card)",
+              color: "var(--text-secondary)",
+              cursor: "pointer",
+              transition: "all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1.0)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "var(--bg-card-hover)";
+              e.currentTarget.style.color = "var(--text-main)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "var(--bg-card)";
+              e.currentTarget.style.color = "var(--text-secondary)";
+            }}
           >
             取消
           </button>
           <button
-            className="btn btn-danger"
             onClick={() => onExitApp(remember)}
             style={{
-              padding: "7px 14px",
-              fontSize: 12.5,
-              borderRadius: 6,
+              padding: "8px 16px",
+              fontSize: 13,
+              borderRadius: 8,
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
+              border: "1px solid rgba(216, 59, 1, 0.4)",
+              background: "rgba(216, 59, 1, 0.08)",
+              color: "#d83b01",
+              fontWeight: 500,
+              cursor: "pointer",
+              transition: "all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1.0)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "#d83b01";
+              e.currentTarget.style.borderColor = "#d83b01";
+              e.currentTarget.style.color = "#ffffff";
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(216, 59, 1, 0.35)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(216, 59, 1, 0.08)";
+              e.currentTarget.style.borderColor = "rgba(216, 59, 1, 0.4)";
+              e.currentTarget.style.color = "#d83b01";
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "none";
             }}
           >
             <svg
-              width="13"
-              height="13"
+              width="14"
+              height="14"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
@@ -166,21 +201,36 @@ export const CloseActionModal: React.FC<CloseActionModalProps> = ({
             彻底退出
           </button>
           <button
-            className="btn btn-primary"
             onClick={() => onHideToTray(remember)}
             style={{
-              padding: "7px 16px",
-              fontSize: 12.5,
-              borderRadius: 6,
+              padding: "8px 18px",
+              fontSize: 13,
+              borderRadius: 8,
               display: "inline-flex",
               alignItems: "center",
-              gap: 6,
-              boxShadow: "0 4px 12px var(--accent-glow)",
+              gap: 7,
+              border: "none",
+              background: "linear-gradient(135deg, #0078d4 0%, #1084d9 100%)",
+              color: "#ffffff",
+              fontWeight: 600,
+              cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(0, 120, 212, 0.38)",
+              transition: "all 0.15s cubic-bezier(0.1, 0.9, 0.2, 1.0)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-1px)";
+              e.currentTarget.style.boxShadow = "0 6px 18px rgba(0, 120, 212, 0.52)";
+              e.currentTarget.style.filter = "brightness(1.06)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 14px rgba(0, 120, 212, 0.38)";
+              e.currentTarget.style.filter = "brightness(1)";
             }}
           >
             <svg
-              width="14"
-              height="14"
+              width="15"
+              height="15"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

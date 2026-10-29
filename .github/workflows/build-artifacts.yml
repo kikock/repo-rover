@@ -165,12 +165,12 @@ jobs:
           $tauriConfPath = "src-tauri/tauri.conf.json"
           $conf = Get-Content $tauriConfPath -Raw | ConvertFrom-Json
           if (-not $conf.bundle.windows) {
-            $conf.bundle | Add-Member -MemberType NoteProperty -Name "windows" -Value (@{})
+            $conf.bundle | Add-Member -MemberType NoteProperty -Name "windows" -Value ([PSCustomObject]@{})
           }
-          $conf.bundle.windows = @{
-            webviewInstallMode = @{
-              type = "offlineInstaller"
-            }
+          if (-not $conf.bundle.windows.webviewInstallMode) {
+            $conf.bundle.windows | Add-Member -MemberType NoteProperty -Name "webviewInstallMode" -Value ([PSCustomObject]@{ type = "offlineInstaller" }) -Force
+          } else {
+            $conf.bundle.windows.webviewInstallMode.type = "offlineInstaller"
           }
           $conf | ConvertTo-Json -Depth 10 | Set-Content $tauriConfPath -Encoding utf8
 

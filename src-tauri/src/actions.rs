@@ -397,6 +397,7 @@ pub fn configure_remote_url(repo_path: &str, remote_url: &str) -> Result<(), Str
 
 /// 智能加载本地仓库（如果是仓库则直接加载，如果是非仓库但包含子仓库的目录，则自动批量加载其直接子仓库）
 pub fn batch_load_local_repos(target_path: &str) -> Result<Vec<crate::inspector::RepoHealth>, String> {
+    use rayon::prelude::*;
     let path = Path::new(target_path);
     if !path.exists() {
         return Err("指定的本地路径不存在".to_string());
@@ -409,20 +410,26 @@ pub fn batch_load_local_repos(target_path: &str) -> Result<Vec<crate::inspector:
     }
 
     // 2. 如果不是，扫描直接子目录（深度为 1）
-    let mut found = Vec::new();
+    let mut candidate_paths = Vec::new();
     if let Ok(entries) = std::fs::read_dir(path) {
         for entry in entries.flatten() {
             let child_path = entry.path();
             if child_path.is_dir() && child_path.join(".git").exists() {
-                found.push(crate::inspector::inspect_repository(&child_path));
+                candidate_paths.push(child_path);
             }
         }
     }
 
-    if found.is_empty() {
-        Err("该目录下未检测到任何有效的 Git 仓库（需包含 .git 目录）".to_string())
-    } else {
-        Ok(found)
+    if candidate_paths.is_empty() {
+        return Err("该目录下未检测到任何有效的 Git 仓库（需包含 .git 目录）".to_string());
     }
+
+    // 架构量化约束：底层状态提取纯在 Rust 并行线程池 (rayon) 执行
+    let found: Vec<crate::inspector::RepoHealth> = candidate_paths
+        .into_par_iter()
+        .map(|child_path| crate::inspector::inspect_repository(&child_path))
+        .collect();
+
+    Ok(found)
 }
 

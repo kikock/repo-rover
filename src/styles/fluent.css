@@ -1,16 +1,16 @@
 /* Fluent Design System - Repo Rover 精致视觉规范 */
 
 :root {
-  --bg-app: #18191b;
-  --bg-sidebar: rgba(26, 27, 30, 0.75);
-  --bg-card: rgba(35, 37, 41, 0.65);
-  --bg-card-hover: rgba(45, 48, 54, 0.85);
+  --bg-app: #202020;
+  --bg-sidebar: rgba(32, 32, 32, 0.82);
+  --bg-card: rgba(45, 45, 45, 0.7);
+  --bg-card-hover: rgba(58, 58, 58, 0.9);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-accent: rgba(0, 120, 212, 0.4);
 
   --text-main: #f3f3f3;
   --text-secondary: #9ea5b0;
-  --text-muted: #6c7380;
+  --text-muted: #8c959f;
 
   --accent-primary: #0078d4;
   --accent-hover: #1084d9;
@@ -23,13 +23,16 @@
   --color-unpushed: #ffaa44;
   --color-unpushed-bg: rgba(255, 170, 68, 0.15);
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  /* Fluent Design 核心量化圆角规范 */
+  --radius-sm: 4px; /* 基础控件（按钮、搜索框、分支标签、筛选 Tag）: 4px */
+  --radius-md: 8px; /* 卡片容器（仓库卡片、统计看板、弹窗）: 8px */
+  --radius-lg: 8px; /* 主窗口容器: 8px */
 
   --backdrop-blur: blur(24px) saturate(160%);
   --shadow-fluent: 0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-card: 0 4px 14px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05); /* 卡片静止态 */
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.12); /* 卡片悬停态 */
+  --fluent-easing: cubic-bezier(0.1, 0.9, 0.2, 1.0); /* Fluent 统一缓动 */
   --font-family:
     "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
   --font-mono: "JetBrains Mono", Consolas, Monaco, monospace;
@@ -38,14 +41,14 @@
 [data-theme="light"] {
   --bg-app: #f4f5f8;
   --bg-sidebar: rgba(240, 242, 246, 0.85);
-  --bg-card: rgba(255, 255, 255, 0.8);
-  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-hover: rgba(255, 255, 255, 0.98);
   --border-subtle: rgba(0, 0, 0, 0.08);
   --border-accent: rgba(0, 120, 212, 0.3);
 
   --text-main: #1f2328;
   --text-secondary: #57606a;
-  --text-muted: #8c959f;
+  --text-muted: #6e7781;
 
   --accent-primary: #0078d4;
   --accent-hover: #0066b5;
@@ -59,7 +62,8 @@
   --color-unpushed-bg: rgba(184, 110, 0, 0.1);
 
   --shadow-fluent: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-card: 0 2px 10px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 * {
@@ -82,6 +86,8 @@ body {
   display: flex;
   height: 100vh;
   width: 100vw;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
   background:
     radial-gradient(
       circle at 10% 10%,
@@ -306,14 +312,14 @@ body {
   justify-content: space-between;
   gap: 14px;
   box-shadow: var(--shadow-card);
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.2s var(--fluent-easing);
 }
 
 .repo-card:hover {
   background: var(--bg-card-hover);
   border-color: var(--border-accent);
   transform: translateY(-2px);
-  box-shadow: var(--shadow-fluent);
+  box-shadow: var(--shadow-card-hover);
 }
 
 .repo-header {
@@ -972,3 +978,147 @@ body {
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+/* ==========================================================================
+   现代全景主题配置卡片 (对标 v1.5.0 规范)
+   ========================================================================== */
+
+.theme-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.theme-segmented {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  padding: 3px;
+  gap: 2px;
+}
+
+[data-theme="light"] .theme-segmented {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.theme-seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  font-size: 13px;
+  border-radius: 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+  font-weight: 500;
+}
+
+.theme-seg-btn:hover {
+  color: var(--text-main);
+}
+
+.theme-seg-btn.active {
+  background: var(--bg-surface);
+  color: var(--text-main);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  font-weight: 600;
+}
+
+.palette-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
+.color-swatch-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  position: relative;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.color-swatch-circle:hover {
+  transform: scale(1.12);
+}
+
+.color-swatch-circle.selected {
+  border-color: #1a1a1a;
+  transform: scale(1.15);
+  box-shadow: 0 0 0 2px #1a1a1a, 0 3px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .color-swatch-circle.selected {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 2px #ffffff, 0 3px 8px rgba(0, 0, 0, 0.4);
+}
+
+.color-swatch-circle .check-mark {
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* iOS / Fluent 现代 Switch 切换开关 */
+.fluent-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.fluent-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.switch-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(120, 120, 128, 0.32);
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 24px;
+}
+
+.switch-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fluent-switch input:checked + .switch-slider {
+  background-color: var(--accent-primary);
+}
+
+.fluent-switch input:checked + .switch-slider:before {
+  transform: translateX(20px);
+}
+

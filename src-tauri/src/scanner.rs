@@ -57,6 +57,8 @@ pub fn scan_directories(app: AppHandle, options: ScanOptions) -> Result<Vec<Repo
 
     let mut discovered_repos = Vec::new();
     let mut total_found = 0;
+    let mut last_progress_emit = std::time::Instant::now();
+    let throttle_duration = std::time::Duration::from_millis(60);
 
     for root_str in options.root_paths {
         let root = PathBuf::from(&root_str);
@@ -103,8 +105,8 @@ pub fn scan_directories(app: AppHandle, options: ScanOptions) -> Result<Vec<Repo
                     continue;
                 }
 
-                // 周期性发送扫描心跳，显示当前扫描目录
-                if total_found % 3 == 0 {
+                // 事件流控与反压：严格执行 >= 60ms 节流，禁止高频细碎事件导致 WebView2 卡死
+                if last_progress_emit.elapsed() >= throttle_duration {
                     let _ = app.emit(
                         "scan_progress",
                         ScanProgressPayload {
@@ -112,6 +114,7 @@ pub fn scan_directories(app: AppHandle, options: ScanOptions) -> Result<Vec<Repo
                             scanned_repos_count: total_found,
                         },
                     );
+                    last_progress_emit = std::time::Instant::now();
                 }
             }
         }

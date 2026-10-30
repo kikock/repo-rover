@@ -448,6 +448,9 @@ export default function App() {
         onOpenRepoUrl={() => {
           openInBrowser("https://github.com/kikock/repo-rover");
         }}
+        onOpenAuthorUrl={() => {
+          openInBrowser("https://home.34462958.xyz");
+        }}
       />
 
       {/* 主视窗 */}

@@ -10,6 +10,7 @@ interface SidebarProps {
   themeMode: ThemeMode;
   onToggleTheme: () => void;
   onOpenRepoUrl: () => void;
+  onOpenAuthorUrl?: () => void;
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -19,6 +20,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   themeMode,
   onToggleTheme,
   onOpenRepoUrl,
+  onOpenAuthorUrl,
 }) => {
   return (
     <aside className="sidebar">
@@ -137,19 +139,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <span style={{ background: "#1f6feb", color: "#ffffff", padding: "0 5px", fontWeight: 600 }}>1.0.3</span>
             </span>
 
-            <span
+            <button
+              onClick={onOpenAuthorUrl}
+              title="访问作者主页 (https://home.34462958.xyz)"
               style={{
                 display: "inline-flex",
                 borderRadius: "3px",
                 overflow: "hidden",
+                border: "none",
+                padding: 0,
+                cursor: "pointer",
                 fontSize: "10px",
                 lineHeight: "16px",
                 boxShadow: "0 1px 2px rgba(0,0,0,0.15)",
+                transition: "transform 0.12s ease, opacity 0.12s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.04)";
+                e.currentTarget.style.opacity = "0.95";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.opacity = "1";
               }}
             >
               <span style={{ background: "#474b55", color: "#e6edf3", padding: "0 4px" }}>by</span>
               <span style={{ background: "#238636", color: "#ffffff", padding: "0 5px", fontWeight: 600 }}>kikock</span>
-            </span>
+            </button>
           </div>
 
           {/* 截图2风格 Git 仓库双拼徽章按钮 */}
